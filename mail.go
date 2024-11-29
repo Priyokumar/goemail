@@ -65,14 +65,15 @@ type sender interface {
 	Send(e *email) error
 }
 
-func Init(con ConnectionDetails) {
+func setConnection(con ConnectionDetails) {
 	host = con.Host
 	port = con.Port
 	smtpPassword = con.SmtpPassword
 	smtpUser = con.SmtpUser
 }
 
-func New(mail MailDetails) (*email, error) {
+func New(con ConnectionDetails, mail MailDetails) (*email, error) {
+	setConnection(con)
 	if host == "" || port == 0 {
 		return nil, errors.New("call init func")
 	}
