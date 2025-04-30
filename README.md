@@ -1,4 +1,4 @@
-# 📧 GoeEmail – Simple and Fast Email Sending in Go
+# 📧 GoEmail – Simple and Fast Email Sending in Go
 
 GoeEmail is a lightweight and easy-to-use package for sending emails using Go (Golang). It supports SMTP authentication, HTML/plain text messages, attachments, and more – all with a clean and developer-friendly API.
 
