@@ -1,22 +1,19 @@
 package goemail
 
 import (
-	"bytes"
+	"context"
 	"errors"
-	"html/template"
-	"log"
+
+	"gopkg.in/gomail.v2"
 )
 
-const ContentHTML = "html"
-
-var (
-	host         string
-	port         int
-	smtpUser     string
-	smtpPassword string
+const (
+	ContentHTML = "html"
+	ContentText = "text"
 )
 
 type email struct {
+	dialer        *gomail.Dialer
 	content       string
 	contentType   string
 	sender        string
@@ -41,75 +38,57 @@ type MailDetails struct {
 	ReturnEmail string
 	Tags        string
 
-	Template      Template
+	Content       Content
 	ImagesToEmbed []string
-
-	Content     string
-	ContentType string
 }
 
-type Template struct {
-	Multilevel    bool
-	TemplatePaths []string
-	Data          interface{}
+type Content struct {
+	Type         string
+	Content      string
+	TemplatePath string
+	Data         interface{}
 }
 
 type ConnectionDetails struct {
-	Host         string
-	Port         int
+	SmtpHost     string
+	SmtpPort     int
 	SmtpUser     string
 	SmtpPassword string
 }
 
 type sender interface {
-	Send(e *email) error
+	Send(ctx context.Context, e *email, retry int) error
 }
 
-func setConnection(con ConnectionDetails) {
-	host = con.Host
-	port = con.Port
-	smtpPassword = con.SmtpPassword
-	smtpUser = con.SmtpUser
-}
-
-func New(con ConnectionDetails, mail MailDetails) (*email, error) {
-	setConnection(con)
-	if host == "" || port == 0 {
-		return nil, errors.New("call init func")
-	}
-	e := new(email)
-	e.contentType = mail.ContentType
-	if e.contentType == ContentHTML {
-		c, err := processTemplate(mail.Template)
-		if err != nil {
-			return nil, err
-		}
-		e.content = c
-		e.contentType = ContentHTML
-	} else {
-		e.content = mail.Content
-	}
-
-	e.bcc = mail.Bcc
-	e.cc = mail.Cc
-	e.to = mail.To
-	e.tags = mail.Tags
-	e.imagesToEmbed = mail.ImagesToEmbed
-	e.returnEmail = mail.ReturnEmail
-	e.sender = mail.Sender
-	e.senderName = mail.SenderName
-	e.subject = mail.Subject
-
-	err := e.validate()
+func New(c ConnectionDetails) (*email, error) {
+	err := c.validate()
 	if err != nil {
 		return nil, err
 	}
-	return e, nil
+	dialer = gomail.NewDialer(c.SmtpHost, c.SmtpPort, c.SmtpUser, c.SmtpPassword)
+	return &email{dialer: dialer}, nil
+}
+
+func (c ConnectionDetails) validate() error {
+	errStr := ""
+	if c.SmtpHost == "" {
+		errStr += "host cannot be empty"
+	}
+	if c.SmtpPort == 0 {
+		errStr += "port cannot be 0"
+	}
+	if c.SmtpPassword == "" {
+		errStr += "SmtpPassword cannot be empty"
+	}
+	if c.SmtpUser == "" {
+		errStr += "SmtpUser cannot be empty"
+	}
+
+	return nil
 }
 
 func (e *email) validate() error {
 
-	// TODO
 	if e.content == "" {
 		return errors.New("content missing")
 	}
@@ -133,43 +112,63 @@ func (e *email) validate() error {
 	if e.returnEmail != "" && len(e.returnEmail) > 500 {
 		return errors.New("returnEmail too long")
 	}
-
 	return nil
 }
 
-func sendBy(e *email, s sender) error {
-	return s.Send(e)
+func sendBy(ctx context.Context, s sender, e *email, retry int) error {
+	return s.Send(ctx, e, retry)
 }
 
-func (e *email) Send() error {
-	return sendBy(e, gomailSender{})
+func (e *email) Send(ctx context.Context, retry int) error {
+	return sendBy(ctx, &gomailSender{}, e, retry)
 }
 
-func processTemplate(template Template) (string, error) {
-	log.Println("process template")
-	if !template.Multilevel {
-		return processSingleTemplate(template.TemplatePaths[0], template.Data)
-	} else {
-		return processMultilevelTemplate(template.TemplatePaths, template.Data)
+func (e *email) SetTo(to []string) {
+	e.to = to
+}
+
+func (e *email) SetCC(cc []string) {
+	e.cc = cc
+}
+
+func (e *email) SetBCC(bcc []string) {
+	e.bcc = bcc
+}
+
+func (e *email) SetTags(tags string) {
+	e.tags = tags
+}
+
+func (e *email) SetSubject(subject string) {
+	e.subject = subject
+}
+
+func (e *email) SetSender(sender string) {
+	e.sender = sender
+}
+
+func (e *email) SetSenderName(senderName string) {
+	e.senderName = senderName
+}
+
+func (e *email) SetReturnEmail(returnEmail string) {
+	e.returnEmail = returnEmail
+}
+
+func (e *email) SetImagesToEmbed(images []string) {
+	e.imagesToEmbed = images
+}
+
+func (e *email) SetContent(content Content) error {
+	if content.Type == ContentHTML {
+		c, err := processTemplate(content.TemplatePath, content.Data)
+		if err != nil {
+			return err
+		}
+		e.content = c
+		e.contentType = ContentHTML
+	} else if content.Type == ContentText {
+		e.content = content.Content
 	}
-}
-
-func processSingleTemplate(templatePath string, data interface{}) (string, error) {
-	t, err := template.ParseFiles(templatePath)
-	if err != nil {
-		log.Println("template parsing error")
-		return "", err
-	}
-	buf := new(bytes.Buffer)
-	err = t.Execute(buf, data)
-	if err != nil {
-		log.Println("template parsing error")
-		return "", err
-	}
-	log.Println(buf.String())
-	return buf.String(), nil
-}
-
-func processMultilevelTemplate(templatePath []string, data interface{}) (string, error) {
-	return "", nil
+	return nil
 }

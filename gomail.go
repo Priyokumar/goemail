@@ -1,32 +1,29 @@
 package goemail
 
 import (
-	"errors"
-	"log"
-	"time"
+	"context"
 
 	"gopkg.in/gomail.v2"
 )
 
-type gomailSender struct{}
+var dialer *gomail.Dialer
 
-func (g gomailSender) Send(e *email) error {
+type gomailSender struct {
+	retry int
+	ctx   context.Context
+}
 
-	gm := getMessage(e)
-	dialer := gomail.NewDialer(host, port, smtpUser, smtpPassword)
-
-	for i := 0; i < 5; i++ {
-		err := dialer.DialAndSend(gm)
-		if err != nil {
-			log.Println("failed to send email. ", err.Error())
-			log.Println("Retry ", i+1)
-		} else {
-			log.Println("sent email")
-			return nil
-		}
-		time.Sleep(5 * time.Second)
+func (g *gomailSender) Send(ctx context.Context, e *email, retry int) error {
+	err := e.validate()
+	if err != nil {
+		return err
 	}
-	return errors.New("failed to sent email")
+	return exponentialBackOffRetry(g.ctx, e, sendEmail, g.retry)
+}
+
+func sendEmail(e *email) error {
+	gm := getMessage(e)
+	return e.dialer.DialAndSend(gm)
 }
 
 func getMessage(e *email) *gomail.Message {
