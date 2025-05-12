@@ -13,7 +13,7 @@ type gomailSender struct {
 	ctx   context.Context
 }
 
-func (g *gomailSender) Send(ctx context.Context, e *email, retry int) error {
+func (g *gomailSender) Send(ctx context.Context, e *email) error {
 	err := e.validate()
 	if err != nil {
 		return err

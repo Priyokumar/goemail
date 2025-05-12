@@ -57,7 +57,7 @@ type ConnectionDetails struct {
 }
 
 type sender interface {
-	Send(ctx context.Context, e *email, retry int) error
+	Send(ctx context.Context, e *email) error
 }
 
 func New(c ConnectionDetails) (*email, error) {
@@ -115,12 +115,12 @@ func (e *email) validate() error {
 	return nil
 }
 
-func sendBy(ctx context.Context, s sender, e *email, retry int) error {
-	return s.Send(ctx, e, retry)
+func sendBy(ctx context.Context, s sender, e *email) error {
+	return s.Send(ctx, e)
 }
 
 func (e *email) Send(ctx context.Context, retry int) error {
-	return sendBy(ctx, &gomailSender{}, e, retry)
+	return sendBy(ctx, &gomailSender{retry: retry}, e)
 }
 
 func (e *email) SetTo(to []string) {
