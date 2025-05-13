@@ -24,36 +24,52 @@ go get github.com/Priyokumar/goemail
 ```
 m, err := goemail.New(
 		goemail.ConnectionDetails{
-			Host:         "w",
-			Port:         3,
-			SmtpUser:     "w",
-			SmtpPassword: "e",
-		},
-		goemail.MailDetails{
-			To:          []string{"priyon999@gmail.com"},
-			Subject:     "Test",
-			Sender:      "priyon999@gmail.com",
-			SenderName:  "Test",
-			ReturnEmail: "priyon999@gmail.com",
-			ContentType: goemail.ContentHTML,
-			Template: goemail.Template{
-				Multilevel:    false,
-				TemplatePaths: []string{"index.html"},
-				Data:          nil,
-			},
+			SmtpHost:     "xxxxxx",
+			SmtpPort:     000,
+			SmtpUser:     "xxxx",
+			SmtpPassword: "xxx",
 		})
 
 	if err != nil {
 		log.Println(err)
 		return
 	}
+	m.SetTo([]string{"xxxxxx"})
+	m.SetSubject("Test")
+	m.SetSenderName("test")
+	m.SetSender("xxxxxx")
+	m.SetReturnEmail("xxxxxx")
+	m.SetContent(
+		goemail.Content{
+			Type:    goemail.ContentHTML,
+			Content: "<div><h2>Test</h2></div>",
+		},
+	)
 
-	err = m.Send()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*50))
+	defer cancel()
+	err = m.Send(ctx, 10)
 
 	if err != nil {
 		log.Println(err)
 		return
 	}
+
  ```
+
+ For sending text emails, you can use the `ContentText` type:
+```
+m.SetContent(
+		goemail.Content{
+			Type:    goemail.ContentText,
+			Content: "This is a test email",
+		},
+	)
+```
+
+ For attaching files to emails:
+```
+m.SetAttachments([]string{"path/to/your/file.txt"})
+```
 
 
