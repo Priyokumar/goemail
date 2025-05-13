@@ -9,6 +9,8 @@ GoeEmail is a lightweight and easy-to-use package for sending emails using Go (G
 - 📤 Send plain text or HTML emails
 - ✅ Supports SMTP authentication (username/password)
 - 💡 Easy integration with your Go applications
+- Support retry logic
+- Support context timeout
 
 ---
 
