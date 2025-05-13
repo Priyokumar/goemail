@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/Priyokumar/goemail"
 )
@@ -11,28 +12,31 @@ func main() {
 
 	m, err := goemail.New(
 		goemail.ConnectionDetails{
-			SmtpHost:     "w",
-			SmtpPort:     3,
-			SmtpUser:     "w",
-			SmtpPassword: "e",
+			SmtpHost:     "xxxxxx",
+			SmtpPort:     000,
+			SmtpUser:     "xxxx",
+			SmtpPassword: "xxx",
 		})
 
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	m.SetTo([]string{"priyon999@gmail.com"})
+	m.SetTo([]string{"xxxxxx"})
 	m.SetSubject("Test")
 	m.SetSenderName("test")
-	m.SetSender("test@test.com")
-	m.SetReturnEmail("tets@test.com")
+	m.SetSender("xxxxxx")
+	m.SetReturnEmail("xxxxxx")
 	m.SetContent(
 		goemail.Content{
-			Type:    goemail.ContentText,
-			Content: "This is test email.",
+			Type:    goemail.ContentHTML,
+			Content: "<div><h2>Test</h2></div>",
 		},
 	)
-	err = m.Send(context.Background(), 1)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*50))
+	defer cancel()
+	err = m.Send(ctx, 10)
 
 	if err != nil {
 		log.Println(err)
