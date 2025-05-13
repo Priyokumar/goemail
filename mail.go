@@ -53,6 +53,9 @@ type email struct {
 
 	// imagesToEmbed is a list of file paths for images to be embedded in the email.
 	imagesToEmbed []string
+
+	// attachments is a list of file paths for images to be attached in the email.
+	attachments []string
 }
 
 // MailDetails represents the details of an email to be sent.
@@ -293,6 +296,17 @@ func (e *email) SetReturnEmail(returnEmail string) {
 //	images - A slice of strings representing the file paths of the images to embed.
 func (e *email) SetImagesToEmbed(images []string) {
 	e.imagesToEmbed = images
+}
+
+// SetAttachements sets the list of image file paths to be attached in the email.
+// The provided slice of strings should contain the file paths of the images
+// that need to be attached in the email.
+//
+// Parameters:
+//
+//	images - A slice of strings representing the file paths of the files to attached.
+func (e *email) SetAttachements(files []string) {
+	e.attachments = files
 }
 
 // SetContent sets the content of the email based on the provided Content struct.

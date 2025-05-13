@@ -72,6 +72,12 @@ func getMessage(e *email) *gomail.Message {
 		gm.SetBody("text/plain", e.content)
 	}
 
+	if len(e.attachments) > 0 {
+		for _, v := range e.attachments {
+			gm.Attach(v)
+		}
+	}
+
 	if len(e.to) > 0 {
 		a := make([]string, 0)
 		for _, v := range e.to {
